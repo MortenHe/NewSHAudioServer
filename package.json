@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "socket.io server",
   "dependencies": {
-    "fs-extra": "^7.0.0",
+    "fs-extra": "^7.0.1",
     "mplayer-wrapper": "^1.0.0",
     "shuffle-array": "^1.0.1",
-    "ws": "^6.1.0"
+    "ws": "^6.2.1"
   }
 }
