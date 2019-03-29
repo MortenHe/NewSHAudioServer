@@ -41,10 +41,19 @@ player.on('playlist-finish', () => {
     //Zum naechsten Titel gehen
     currentPosition = (currentPosition + 1) % currentFiles.length;
 
-    //Clients informieren ueber neue Position informieren
+    //insertOffset um 1 verkleinern, wenn Offset gesetzt ist
+    if (currentInsertOffset > 0) {
+        currentInsertOffset = currentInsertOffset - 1;
+    }
+
+    //Clients informieren ueber neue Position und inserOffset informieren
     sendClientInfo([{
         type: "set-position",
         value: currentPosition
+    },
+    {
+        type: "set-insert-offset",
+        value: currentInsertOffset
     }]);
 
     //Naechste Datei abspielen
