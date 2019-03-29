@@ -27,6 +27,7 @@ currentVolume = 50;
 currentPosition = 0;
 currentPaused = false;
 currentFiles = [];
+currentInsertOffset = 0;
 
 //Jede Sekunde die aktuelle Zeit innerhalb des Tracks liefern -> damit playlist-finish getriggert wird
 setInterval(() => {
@@ -133,7 +134,10 @@ wss.on('connection', function connection(ws) {
                 //Es ist nicht mehr pausiert
                 currentPaused = false;
 
-                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir sind
+                //neue Titel hinter dem neu angewaehlten Titel einfuegen
+                currentInsertOffset = 0;
+
+                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir sind und insertPosition
                 messageObjArr.push(
                     {
                         type: "set-position",
@@ -141,6 +145,9 @@ wss.on('connection', function connection(ws) {
                     }, {
                         type: "toggle-paused",
                         value: currentPaused
+                    }, {
+                        type: "set-insert-offset",
+                        value: currentInsertOffset
                     });
 
                 //Datei abspielen
@@ -157,7 +164,10 @@ wss.on('connection', function connection(ws) {
                 //Es ist nicht mehr pausiert
                 currentPaused = false;
 
-                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir nun sind
+                //neue Titel hinter dem neu angewaehlten Titel einfuegen
+                currentInsertOffset = 0;
+
+                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir nun sind und insertPosition
                 messageObjArr.push(
                     {
                         type: "set-position",
@@ -165,6 +175,9 @@ wss.on('connection', function connection(ws) {
                     }, {
                         type: "toggle-paused",
                         value: currentPaused
+                    }, {
+                        type: "set-insert-offset",
+                        value: currentInsertOffset
                     });
 
                 //Datei abspielen
@@ -184,6 +197,17 @@ wss.on('connection', function connection(ws) {
                 messageObjArr.push({
                     type: "toggle-paused",
                     value: currentPaused
+                });
+                break;
+
+            //InsertOffset anpassen
+            case 'set-insert-offset':
+                currentInsertOffset = value;
+
+                //Clients informieren ueber insertOffset
+                messageObjArr.push({
+                    type: "set-insert-offset",
+                    value: currentInsertOffset
                 });
                 break;
 
