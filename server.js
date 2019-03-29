@@ -4,7 +4,7 @@ const player = createPlayer();
 
 //WebSocketServer anlegen und starten
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080, clientTracking: true });
+const wss = new WebSocket.Server({ port: 9090, clientTracking: true });
 
 //Wo liegen Audio-Dateien
 const dir = "/media/shplayer";
