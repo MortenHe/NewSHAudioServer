@@ -23,7 +23,7 @@ console.log(initialVolumeCommand)
 execSync(initialVolumeCommand);
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
-currentVolume = 50;
+currentVolume = 80;
 currentPosition = 0;
 currentPaused = false;
 currentFiles = [];
@@ -295,6 +295,9 @@ wss.on('connection', function connection(ws) {
     }, {
         type: "set-files",
         value: currentFiles
+    }, {
+        type: "set-insert-offset",
+        value: currentInsertOffset
     }];
 
     //Ueber Objekte gehen, die an WS geschickt werden
