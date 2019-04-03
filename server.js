@@ -130,21 +130,21 @@ wss.on('connection', function connection(ws) {
             case 'change-item':
                 console.log("change-item " + value);
 
-                //wenn der naechste Song kommen soll
+                //wenn der naechste Song kommen soll, insertOffeset erhalten
                 if (value) {
                     currentPosition = (currentPosition + 1) % currentFiles.length;
+                    currentInsertOffset = currentInsertOffset > 0 ? currentInsertOffset - 1 : 0;
                 }
 
-                //der vorherige Titel soll kommen
+                //der vorherige Titel soll kommen, Modulo bei negativen Zahlen, s. https://stackoverflow.com/questions/4467539/javascript-modulo-gives-a-negative-result-for-negative-numbers
+                //insertOffeset zuruecksetzen
                 else {
-                    currentPosition = (currentPosition - 1) % currentFiles.length;
+                    currentPosition = (((currentPosition - 1) % currentFiles.length) + currentFiles.length) % currentFiles.length;
+                    currentInsertOffset = 0;
                 }
 
                 //Es ist nicht mehr pausiert
                 currentPaused = false;
-
-                //neue Titel hinter dem neu angewaehlten Titel einfuegen
-                currentInsertOffset = 0;
 
                 //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir sind und insertPosition
                 messageObjArr.push(
@@ -166,6 +166,18 @@ wss.on('connection', function connection(ws) {
             //Sprung zu einem bestimmten Titel in Playlist
             case "jump-to":
 
+                //Falls man nach vorne springt und nicht ueber insertOffset springt -> inesrtOffset erhalten
+                if (value < (currentPosition + currentInsertOffset) && value >= currentPosition) {
+                    currentInsertOffset = currentInsertOffset - (value - currentPosition);
+                    console.log("update insertOffeset " + currentInsertOffset);
+                }
+
+                //es wurde zurueckgesprungen oder der insertOffset uebersprungen -> insertOffeset zuruecksetzen 
+                else {
+                    currentInsertOffset = 0;
+                    console.log("reset insertOffset")
+                }
+
                 //Wohin soll es in Playlist gehen?
                 currentPosition = value;
                 console.log("jump to " + currentPosition);
@@ -173,10 +185,7 @@ wss.on('connection', function connection(ws) {
                 //Es ist nicht mehr pausiert
                 currentPaused = false;
 
-                //neue Titel hinter dem neu angewaehlten Titel einfuegen
-                currentInsertOffset = 0;
-
-                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir nun sind und insertPosition
+                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir nun sind, neue Position und insertOffset
                 messageObjArr.push(
                     {
                         type: "set-position",
@@ -209,33 +218,28 @@ wss.on('connection', function connection(ws) {
                 });
                 break;
 
-            //InsertOffset anpassen
-            case 'set-insert-offset':
-                currentInsertOffset = value;
-
-                //Clients informieren ueber insertOffset
-                messageObjArr.push({
-                    type: "set-insert-offset",
-                    value: currentInsertOffset
-                });
-                break;
-
-            //Playlist und Position anpassen
-            case 'set-files':
+            //Playlist, Position und InsertOffset anpassen
+            case 'set-files-position-offset':
 
                 //Playlist und Position anpassen (Position kann sich aendern, wenn ein Titel vor dem aktuellen Titel hinten eingereiht wurde)
                 currentFiles = value.files;
                 currentPosition = value.position
+                currentInsertOffset = value.insertOffset
                 console.log("new playlist is\n" + currentFiles.join("\n"));
                 console.log("new position " + currentPosition);
+                console.log("new insertOffeset " + currentInsertOffset);
 
                 //Clients informieren ueber Playlist und Position
-                messageObjArr.push({
-                    type: "set-files",
-                    value: currentFiles
-                }, {
+                messageObjArr.push(
+                    {
+                        type: "set-files",
+                        value: currentFiles
+                    }, {
                         type: "set-position",
                         value: currentPosition
+                    }, {
+                        type: "set-insert-offset",
+                        value: currentInsertOffset
                     });
                 break;
 
