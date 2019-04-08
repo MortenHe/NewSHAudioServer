@@ -18,9 +18,9 @@ const shuffle = require('shuffle-array');
 const { execSync } = require('child_process');
 
 //Lautstaerke zu Beginn auf 100% setzen
-let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
-console.log(initialVolumeCommand)
-execSync(initialVolumeCommand);
+//let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
+//console.log(initialVolumeCommand)
+//execSync(initialVolumeCommand);
 
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 80;
