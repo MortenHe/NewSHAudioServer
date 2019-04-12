@@ -17,17 +17,15 @@ const shuffle = require('shuffle-array');
 //Befehle auf Kommandzeile ausfuehren
 const { execSync } = require('child_process');
 
-//Lautstaerke zu Beginn auf 100% setzen
-let initialVolumeCommand = "sudo amixer sset PCM 100% -M";
-console.log(initialVolumeCommand)
-execSync(initialVolumeCommand);
-
 //Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
 currentVolume = 80;
 currentPosition = 0;
 currentPaused = false;
 currentFiles = [];
 currentInsertOffset = 0;
+
+//initiale Lautstaerke setzen
+setVolume();
 
 //Jede Sekunde die aktuelle Zeit innerhalb des Tracks liefern -> damit playlist-finish getriggert wird
 setInterval(() => {
@@ -257,8 +255,7 @@ wss.on('connection', function connection(ws) {
                 }
 
                 //Lautstaerke setzen
-                console.log("change volume to " + currentVolume);
-                player.setVolume(currentVolume);
+                setVolume();
 
                 //Nachricht mit Volume an clients schicken 
                 messageObjArr.push({
@@ -318,9 +315,6 @@ function playFile() {
 
     //Datei laden und starten
     player.exec('loadfile "' + currentFiles[currentPosition] + '"');
-
-    //Player auf aktuelle Lautstaerke stellen
-    player.setVolume(currentVolume);
 }
 
 //Infos ans WS-Clients schicken
@@ -337,4 +331,11 @@ function sendClientInfo(messageObjArr) {
             catch (e) { }
         }
     });
+}
+
+//Lautstaerke setzen
+function setVolume() {
+    let initialVolumeCommand = "sudo amixer sset Digital " + currentVolume + "% -M";
+    console.log(initialVolumeCommand)
+    execSync(initialVolumeCommand);
 }
