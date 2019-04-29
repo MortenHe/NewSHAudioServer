@@ -9,20 +9,21 @@ const wss = new WebSocket.Server({ port: 9090, clientTracking: true });
 //Wo liegen Audio-Dateien
 const dir = "/media/shplayer";
 
-//filesystem und random fuer Playlist
+//filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
 const path = require('path');
 const shuffle = require('shuffle-array');
+const arrayMove = require('array-move');
 
-//Befehle auf Kommandzeile ausfuehren
+//Befehle auf Kommandzeile ausfuehren (volume)
 const { execSync } = require('child_process');
 
-//Aktuelle Infos zu Volume / Position in Song / Position innerhalb der Playlist / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
-currentVolume = 80;
-currentPosition = 0;
-currentPaused = false;
-currentFiles = [];
-currentInsertOffset = 0;
+//Aktuelle Infos zu Volume / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
+var data = [];
+data["volume"] = 80;
+data["files"] = [];
+data["paused"] = false;
+data["insertIndex"] = 1;
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -36,70 +37,24 @@ setInterval(() => {
 player.on('playlist-finish', () => {
     console.log("playlist finished");
 
-    //Zum naechsten Titel gehen
-    currentPosition = (currentPosition + 1) % currentFiles.length;
+    //In Playlist einen Schritt weitergehen
+    shiftArray(1);
 
     //insertOffset um 1 verkleinern, wenn Offset gesetzt ist
-    if (currentInsertOffset > 0) {
-        currentInsertOffset = currentInsertOffset - 1;
+    if (data["insertIndex"] > 1) {
+        data["insertIndex"] = data["insertIndex"] - 1;
     }
 
-    //Clients informieren ueber neue Position und inserOffset informieren
-    sendClientInfo([{
-        type: "set-position",
-        value: currentPosition
-    },
-    {
-        type: "set-insert-offset",
-        value: currentInsertOffset
-    }]);
+    //Clients informieren ueber files und inserOffset informieren
+    sendClientInfo(["files", "insertIndex"])
 
-    //Naechste Datei abspielen
+    //Datei abspielen
     playFile();
 });
 
-//Playlist erstellen: dazu rekursiv ueber Verzeichnisse gehen
-var walk = function (dir) {
-
-    //Ergebnisse sammeln
-    var results = [];
-
-    //Dateien in Verzeichnis auflisten
-    var list = fs.readdirSync(dir);
-
-    //Ueber Dateien iterieren
-    list.forEach(function (file) {
-
-        //Infos ueber Datei holen
-        file = path.resolve(dir, file);
-        var stat = fs.statSync(file);
-
-        //Wenn es ein Verzeichnis ist
-        if (stat && stat.isDirectory()) {
-
-            //Unterverzeichnis aufrufen
-            results = results.concat(walk(file));
-        }
-
-        //es ist eine Datei
-        else {
-
-            //nur mp3-Dateien sammeln
-            if (path.extname(file).toLowerCase() === '.mp3') {
-                results.push(file);
-            }
-        }
-    });
-
-    //Liste zurueckgeben
-    return results;
-}
-
-//alle mp3-Dateien in diesem Dir-Tree ermitteln
-const allFiles = walk(dir);
-
-//Dateien random
-currentFiles = shuffle(allFiles);
+//alle mp3-Dateien in diesem Dir-Tree ermitteln und playlist random erstellen
+const allFiles = getAudioFiles(dir);
+data["files"] = shuffle(allFiles);
 
 //1. Song starten
 playFile();
@@ -108,137 +63,90 @@ playFile();
 wss.on('connection', function connection(ws) {
     console.log("new client connected");
 
-    //Wenn WS eine Nachricht an WSS sendet
+    //Wenn Client eine Nachricht an WSS sendet
     ws.on('message', function incoming(message) {
 
         //Nachricht kommt als String -> in JSON Objekt konvertieren
         var obj = JSON.parse(message);
-
-        //Werte auslesen
         let type = obj.type;
         let value = obj.value;
 
-        //Array von MessageObjekte erstellen, die an WS gesendet werden
-        let messageObjArr = [];
+        //Array von Messages erstellen, die an Client gesendet werden
+        let messageArr = [];
 
         //Pro Typ gewisse Aktionen durchfuehren
         switch (type) {
 
             //Song wurde vom Nutzer weitergeschaltet
             case 'change-item':
-                console.log("change-item " + value);
 
-                //wenn der naechste Song kommen soll, insertOffeset erhalten
-                if (value) {
-                    currentPosition = (currentPosition + 1) % currentFiles.length;
-                    currentInsertOffset = currentInsertOffset > 0 ? currentInsertOffset - 1 : 0;
+                //wenn der naechste Song kommen soll, insertOffeset berechnen
+                if (value === 1) {
+                    data["insertIndex"] = data["insertIndex"] > 1 ? data["insertIndex"] - 1 : 1;
                 }
 
-                //der vorherige Titel soll kommen, Modulo bei negativen Zahlen, s. https://stackoverflow.com/questions/4467539/javascript-modulo-gives-a-negative-result-for-negative-numbers
-                //insertOffeset zuruecksetzen
+                //wenn der vorherige Song kommen soll, insertOffeset berechnen
                 else {
-                    currentPosition = (((currentPosition - 1) % currentFiles.length) + currentFiles.length) % currentFiles.length;
-                    currentInsertOffset = 0;
+                    data["insertIndex"] = data["insertIndex"] < data["files"].length ? data["insertIndex"] + 1 : data["insertIndex"];
                 }
+
+                //Titel-Array neu erzeugen
+                shiftArray(value);
 
                 //Es ist nicht mehr pausiert
-                currentPaused = false;
+                data["paused"] = false;
 
-                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir sind und insertPosition
-                messageObjArr.push(
-                    {
-                        type: "set-position",
-                        value: currentPosition
-                    }, {
-                        type: "toggle-paused",
-                        value: currentPaused
-                    }, {
-                        type: "set-insert-offset",
-                        value: currentInsertOffset
-                    });
-
-                //Datei abspielen
+                //Song abspielen und Nachricht an clients
                 playFile();
+                messageArr.push("files", "paused", "insertIndex");
                 break;
 
             //Sprung zu einem bestimmten Titel in Playlist
             case "jump-to":
 
-                //Falls man nach vorne springt und nicht ueber insertOffset springt -> inesrtOffset erhalten
-                if (value < (currentPosition + currentInsertOffset) && value >= currentPosition) {
-                    currentInsertOffset = currentInsertOffset - (value - currentPosition);
-                    console.log("update insertOffeset " + currentInsertOffset);
+                //Playlist neu erstellen, damit neu gewaehlter Titel an 1. Stelle steht
+                shiftArray(value);
+
+                //Falls man nicht ueber insertIndex springt -> insertIndex erhalten
+                if (value < data["insertIndex"]) {
+                    data["insertIndex"] = data["insertIndex"] - value;
                 }
 
-                //es wurde zurueckgesprungen oder der insertOffset uebersprungen -> insertOffeset zuruecksetzen 
+                //es wurde ueber den uebersprungen -> insertIndex zuruecksetzen 
                 else {
-                    currentInsertOffset = 0;
-                    console.log("reset insertOffset")
+                    data["insertIndex"] = 1;
                 }
-
-                //Wohin soll es in Playlist gehen?
-                currentPosition = value;
-                console.log("jump to " + currentPosition);
 
                 //Es ist nicht mehr pausiert
-                currentPaused = false;
+                data["paused"] = false;
 
-                //Nachricht an clients, dass nun nicht mehr pausiert ist und wo wir nun sind, neue Position und insertOffset
-                messageObjArr.push(
-                    {
-                        type: "set-position",
-                        value: currentPosition
-                    }, {
-                        type: "toggle-paused",
-                        value: currentPaused
-                    }, {
-                        type: "set-insert-offset",
-                        value: currentInsertOffset
-                    });
-
-                //Datei abspielen
+                //Song abspielen und clients informieren
                 playFile();
+                messageArr.push("files", "paused", "insertIndex");
                 break;
 
             //Pause-Status toggeln
             case 'toggle-paused':
 
-                //Pausenstatus toggeln
-                currentPaused = !currentPaused;
-
-                //Pause toggeln
+                //Pausenstatus toggeln, Player-Pause toggeln und clients informieren
+                data["paused"] = !data["paused"];
                 player.playPause();
-
-                //Nachricht an clients ueber Paused-Status
-                messageObjArr.push({
-                    type: "toggle-paused",
-                    value: currentPaused
-                });
+                messageArr.push("paused");
                 break;
 
-            //Playlist, Position und InsertOffset anpassen
-            case 'set-files-position-offset':
+            //Titel einreihen
+            case 'enque-title':
 
-                //Playlist und Position anpassen (Position kann sich aendern, wenn ein Titel vor dem aktuellen Titel hinten eingereiht wurde)
-                currentFiles = value.files;
-                currentPosition = value.position
-                currentInsertOffset = value.insertOffset
-                console.log("new playlist is\n" + currentFiles.join("\n"));
-                console.log("new position " + currentPosition);
-                console.log("new insertOffeset " + currentInsertOffset);
+                //Titel an passende Stelle in playlist verschieben
+                data["files"] = arrayMove(data["files"], value, data["insertIndex"]);
 
-                //Clients informieren ueber Playlist und Position
-                messageObjArr.push(
-                    {
-                        type: "set-files",
-                        value: currentFiles
-                    }, {
-                        type: "set-position",
-                        value: currentPosition
-                    }, {
-                        type: "set-insert-offset",
-                        value: currentInsertOffset
-                    });
+                //Wenn eingereihter Titel hinter Einfuegemarke liegt, Einfuegemarke nach hinten verschieben
+                if (value >= data["insertIndex"]) {
+                    data["insertIndex"]++;
+                }
+
+                //Clients informieren
+                messageArr.push("files", "insertIndex");
                 break;
 
             //Lautstaerke aendern
@@ -246,22 +154,17 @@ wss.on('connection', function connection(ws) {
 
                 //Wenn es lauter werden soll, max. 100 setzen
                 if (value) {
-                    currentVolume = Math.min(100, currentVolume + 10);
+                    data["volume"] = Math.min(100, data["volume"] + 10);
                 }
 
                 //es soll leiser werden, min. 0 setzen
                 else {
-                    currentVolume = Math.max(0, currentVolume - 10);
+                    data["volume"] = Math.max(0, data["volume"] - 10);
                 }
 
-                //Lautstaerke setzen
+                //Lautstaerke setzen und clients informieren
                 setVolume();
-
-                //Nachricht mit Volume an clients schicken 
-                messageObjArr.push({
-                    type: type,
-                    value: currentVolume
-                });
+                messageArr.push("volume");
                 break;
 
             //System herunterfahren
@@ -269,10 +172,7 @@ wss.on('connection', function connection(ws) {
                 console.log("shutdown");
 
                 //Shutdown-Info an Clients schicken
-                sendClientInfo([{
-                    type: "shutdown",
-                    value: ""
-                }]);
+                sendClientInfo("shutdown");
 
                 //Pi herunterfahren
                 execSync("shutdown -h now");
@@ -280,50 +180,45 @@ wss.on('connection', function connection(ws) {
         }
 
         //Infos an Clients schicken
-        sendClientInfo(messageObjArr);
+        sendClientInfo(messageArr);
     });
 
-    //WS einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectObjectArr = [{
-        type: "change-volume",
-        value: currentVolume
-    }, {
-        type: "set-position",
-        value: currentPosition
-    }, {
-        type: "toggle-paused",
-        value: currentPaused
-    }, {
-        type: "set-files",
-        value: currentFiles
-    }, {
-        type: "set-insert-offset",
-        value: currentInsertOffset
-    }];
+    //Clients einmalig bei der Verbindung ueber div. Wert informieren
+    let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex"]
 
-    //Ueber Objekte gehen, die an WS geschickt werden
-    WSConnectObjectArr.forEach(messageObj => {
+    //Ueber Messages gehen, die an WS geschickt werden
+    WSConnectMessageArr.forEach(message => {
 
-        //Info an WS schicken
+        //Message-Object erzeugen und an Client schicken
+        let messageObj = {
+            "type": message,
+            "value": data[message]
+        };
         ws.send(JSON.stringify(messageObj));
     });
 });
 
-//Datei abspielen
+//Datei abspielen (immer 1. Datei, da aktueller Titel oben steht und playlist entsprechend angepasst wird)
 function playFile() {
-    console.log("playfile " + currentFiles[currentPosition]);
+    console.log("playfile " + data["files"][0]);
 
     //Datei laden und starten
-    player.exec('loadfile "' + currentFiles[currentPosition] + '"');
+    player.exec('loadfile "' + data["files"][0] + '"');
 }
 
 //Infos ans WS-Clients schicken
-function sendClientInfo(messageObjArr) {
+function sendClientInfo(messageArr) {
 
-    //Ueber Liste der MessageObjekte gehen
-    messageObjArr.forEach(messageObj => {
+    //Ueber Liste der Messages gehen
+    messageArr.forEach(message => {
 
-        //Ueber Liste der WS gehen und Nachricht schicken
+        //Message-Object erzeugen
+        let messageObj = {
+            "type": message,
+            "value": data[message]
+        };
+
+        //Ueber Liste der Clients gehen und Nachricht schicken
         for (ws of wss.clients) {
             try {
                 ws.send(JSON.stringify(messageObj));
@@ -333,9 +228,47 @@ function sendClientInfo(messageObjArr) {
     });
 }
 
+//Anfangspunkt eines Arrays verschieben: [1, 2, 3, 4, 5] => [3, 4, 5, 1, 2]
+function shiftArray(splitPosition) {
+    data["files"] = data["files"].slice(splitPosition).concat(data["files"].slice(0, splitPosition));
+}
+
 //Lautstaerke setzen
 function setVolume() {
-    let initialVolumeCommand = "sudo amixer sset Digital " + currentVolume + "% -M";
+    let initialVolumeCommand = "sudo amixer sset Digital " + data["volume"] + " % -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
+}
+
+//Playlist erstellen: dazu rekursiv ueber Verzeichnisse gehen
+function getAudioFiles(dir) {
+
+    //Ergebnisse sammeln
+    let results = [];
+
+    //Dateien in Verzeichnis auflisten
+    let list = fs.readdirSync(dir);
+
+    //Ueber Dateien iterieren
+    list.forEach(function (file) {
+
+        //Infos ueber Datei holen
+        file = path.resolve(dir, file);
+        let stat = fs.statSync(file);
+
+        //Wenn es ein Verzeichnis ist -> Unterverzeichnis aufrufen
+        if (stat && stat.isDirectory()) {
+            results = results.concat(getAudioFiles(file));
+        }
+
+        //es ist eine Datei -> nur mp3-Dateien sammeln
+        else {
+            if (path.extname(file).toLowerCase() === '.mp3') {
+                results.push(file);
+            }
+        }
+    });
+
+    //Datei-Liste zurueckgeben
+    return results;
 }
