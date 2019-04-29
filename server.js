@@ -137,13 +137,21 @@ wss.on('connection', function connection(ws) {
             //Titel einreihen
             case 'enque-title':
 
-                //Titel an passende Stelle in playlist verschieben
-                data["files"] = arrayMove(data["files"], value, data["insertIndex"]);
+                //Wo soll Titel einfuegt werden?
+                let tempInsertIndex = data["insertIndex"];
 
                 //Wenn eingereihter Titel hinter Einfuegemarke liegt, Einfuegemarke nach hinten verschieben
                 if (value >= data["insertIndex"]) {
                     data["insertIndex"]++;
                 }
+
+                //eingereihter Titel liegt vor der Einfuegemarke, Einfuegeindex einen Stelle vorher
+                else {
+                    tempInsertIndex--;
+                }
+
+                //Titel an passende Stelle in playlist verschieben
+                data["files"] = arrayMove(data["files"], value, tempInsertIndex);
 
                 //Clients informieren
                 messageArr.push("files", "insertIndex");
@@ -235,7 +243,7 @@ function shiftArray(splitPosition) {
 
 //Lautstaerke setzen
 function setVolume() {
-    let initialVolumeCommand = "sudo amixer sset Digital " + data["volume"] + " % -M";
+    let initialVolumeCommand = "sudo amixer sset Digital " + data["volume"] + "% -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
 }
