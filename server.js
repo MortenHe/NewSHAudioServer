@@ -6,14 +6,15 @@ const player = createPlayer();
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 9090, clientTracking: true });
 
-//Wo liegen Audio-Dateien
-const dir = "/media/shplayer";
-
 //filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
 const path = require('path');
 const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
+
+//Aus Config auslesen wo die Audio-Dateien liegen
+const configFile = fs.openSync("config.json");
+const audioDir = configFile["audioDir"];
 
 //Befehle auf Kommandzeile ausfuehren (volume)
 const { execSync } = require('child_process');
@@ -53,7 +54,7 @@ player.on('playlist-finish', () => {
 });
 
 //alle mp3-Dateien in diesem Dir-Tree ermitteln und playlist random erstellen
-const allFiles = getAudioFiles(dir);
+const allFiles = getAudioFiles(audioDir);
 data["files"] = shuffle(allFiles);
 
 //1. Song starten
