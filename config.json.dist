@@ -1,3 +1,4 @@
 {
-    "audioDir": "/media/shplayer"
+    "audioDir": "/media/shplayer",
+    "audioOutput": "Digital"
 }

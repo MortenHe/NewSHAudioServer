@@ -136,7 +136,7 @@ wss.on('connection', function connection(ws) {
                 break;
 
             //Titel einreihen
-            case 'enque-title':
+            case 'enqueue-title':
 
                 //Wo soll Titel einfuegt werden?
                 let tempInsertIndex = data["insertIndex"];
@@ -151,10 +151,8 @@ wss.on('connection', function connection(ws) {
                     tempInsertIndex--;
                 }
 
-                //Titel an passende Stelle in playlist verschieben
+                //Titel an passende Stelle in playlist verschieben und Clients informieren
                 data["files"] = arrayMove(data["files"], value, tempInsertIndex);
-
-                //Clients informieren
                 messageArr.push("files", "insertIndex");
                 break;
 
