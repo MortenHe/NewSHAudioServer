@@ -13,7 +13,7 @@ const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
 
 //Aus Config auslesen wo die Audio-Dateien liegen
-const configFile = fs.openSync("config.json");
+const configFile = fs.readJsonSync('config.json');
 const audioDir = configFile["audioDir"];
 
 //Befehle auf Kommandzeile ausfuehren (volume)
@@ -244,7 +244,7 @@ function shiftArray(splitPosition) {
 
 //Lautstaerke setzen
 function setVolume() {
-    let initialVolumeCommand = "sudo amixer sset Digital " + data["volume"] + "% -M";
+    let initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
 }
