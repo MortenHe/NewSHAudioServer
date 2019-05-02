@@ -179,7 +179,7 @@ wss.on('connection', function connection(ws) {
                 console.log("shutdown");
 
                 //Shutdown-Info an Clients schicken
-                sendClientInfo("shutdown");
+                sendClientInfo(["shutdown"]);
 
                 //Pi herunterfahren
                 execSync("shutdown -h now");
