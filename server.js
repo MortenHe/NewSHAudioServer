@@ -193,7 +193,7 @@ wss.on('connection', function connection(ws) {
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
     let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex"]
 
-    //Ueber Messages gehen, die an WS geschickt werden
+    //Ueber Messages gehen, die an Clients geschickt werden
     WSConnectMessageArr.forEach(message => {
 
         //Message-Object erzeugen und an Client schicken
