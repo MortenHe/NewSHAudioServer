@@ -151,10 +151,23 @@ wss.on('connection', function connection(ws) {
                     tempInsertIndex--;
                 }
 
-                //Titel an passende Stelle in playlist verschieben und Clients informieren
+                //Titel an passende Stelle in Playlist verschieben und Clients informieren
                 data["files"] = arrayMove(data["files"], value, tempInsertIndex);
                 messageArr.push("files", "insertIndex");
                 break;
+
+            //Titel ans Ende der Playlist verschieben
+            case 'move-title-to-end':
+
+                //Wenn eingereihter Titel im Einfuegebereich liegt, Einfuegemarke nach vorne verschieben
+                if (value < data["insertIndex"]) {
+                    data["insertIndex"]--;
+                }
+
+                //Titel ans Ende schieben und Clients informieren
+                data["files"] = arrayMove(data["files"], value, data["files"].length - 1);
+                messageArr.push("files", "insertIndex");
+
 
             //Lautstaerke aendern
             case 'change-volume':
