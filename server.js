@@ -167,7 +167,7 @@ wss.on('connection', function connection(ws) {
                 //Titel ans Ende schieben und Clients informieren
                 data["files"] = arrayMove(data["files"], value, data["files"].length - 1);
                 messageArr.push("files", "insertIndex");
-
+                break;
 
             //Lautstaerke aendern
             case 'change-volume':
