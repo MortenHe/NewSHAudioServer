@@ -12,10 +12,6 @@ const path = require('path');
 const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
 
-//Aus Config auslesen wo die Audio-Dateien liegen
-const configFile = fs.readJsonSync('config.json');
-const audioDir = configFile["audioDir"];
-
 //Befehle auf Kommandzeile ausfuehren (volume)
 const { execSync } = require('child_process');
 
@@ -25,6 +21,10 @@ data["volume"] = 80;
 data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
+
+//Aus Config auslesen wo die Audio-Dateien liegen
+const configFile = fs.readJsonSync('config.json');
+data["audioMode"] = process.argv[2] || "sh";
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -53,9 +53,8 @@ player.on('playlist-finish', () => {
     playFile();
 });
 
-//alle mp3-Dateien in diesem Dir-Tree ermitteln und playlist random erstellen
-const allFiles = getAudioFiles(audioDir);
-data["files"] = shuffle(allFiles);
+//alle mp3-Dateien in diesem Modus (Unterordner) ermitteln und random list erstellen
+getAudioFiles();
 
 //1. Song starten
 playFile();
@@ -169,6 +168,20 @@ wss.on('connection', function connection(ws) {
                 messageArr.push("files", "insertIndex");
                 break;
 
+            //Zwischen Liederlisten wechseln (Musiksammlung SH, MH, Kids)
+            case 'set-audio-mode':
+
+                //Wo liegen die Dateien des neuen Modus?
+                data["audioMode"] = value;
+
+                //Playlist erstellen
+                getAudioFiles();
+
+                //1. Song starten und Clients informieren
+                playFile();
+                messageArr.push("files", "audioMode");
+                break;
+
             //Lautstaerke aendern
             case 'change-volume':
 
@@ -204,7 +217,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex"]
+    let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioMode"]
 
     //Ueber Messages gehen, die an Clients geschickt werden
     WSConnectMessageArr.forEach(message => {
@@ -261,15 +274,16 @@ function setVolume() {
 }
 
 //Playlist erstellen: dazu rekursiv ueber Verzeichnisse gehen
-function getAudioFiles(dir) {
+function getAudioFiles() {
 
-    //Ergebnisse sammeln
-    let results = [];
+    //aktuelles Audioverzeichnis ermitteln und Dateien daraus ermitteln
+    let dir = configFile["audioDir"] + "/" + data["audioMode"];
 
     //Dateien in Verzeichnis auflisten
     let list = fs.readdirSync(dir);
 
-    //Ueber Dateien iterieren
+    //Ueber Dateien iterieren und sammeln
+    let results = [];
     list.forEach(function (file) {
 
         //Infos ueber Datei holen
@@ -282,13 +296,12 @@ function getAudioFiles(dir) {
         }
 
         //es ist eine Datei -> nur mp3-Dateien sammeln
-        else {
-            if (path.extname(file).toLowerCase() === '.mp3') {
-                results.push(file);
-            }
+        else if (path.extname(file).toLowerCase() === '.mp3') {
+            results.push(file);
         }
     });
 
-    //Datei-Liste zurueckgeben
-    return results;
+    //Dateien in zufaelliger Reihenfolge
+    data["files"] = shuffle(results);
+    console.log(data["files"]);
 }
