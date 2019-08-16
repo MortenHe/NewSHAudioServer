@@ -174,12 +174,16 @@ wss.on('connection', function connection(ws) {
                 //Wo liegen die Dateien des neuen Modus?
                 data["audioMode"] = value;
 
+                //Pause und InsertIndex zuruecksetzen
+                data["paused"] = false;
+                data["insertIndex"] = 1;
+
                 //Playlist erstellen
                 getAudioFiles();
 
                 //1. Song starten und Clients informieren
                 playFile();
-                messageArr.push("files", "audioMode");
+                messageArr.push("files", "audioMode", "paused", "insertIndex");
                 break;
 
             //Lautstaerke aendern
