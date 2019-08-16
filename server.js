@@ -54,7 +54,8 @@ player.on('playlist-finish', () => {
 });
 
 //alle mp3-Dateien in diesem Modus (Unterordner) ermitteln und random list erstellen
-getAudioFiles();
+let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
+data["files"] = shuffle(allFiles);
 
 //1. Song starten
 playFile();
@@ -173,13 +174,15 @@ wss.on('connection', function connection(ws) {
 
                 //Wo liegen die Dateien des neuen Modus?
                 data["audioMode"] = value;
+                let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
+                data["files"] = shuffle(allFiles);
 
                 //Pause und InsertIndex zuruecksetzen
                 data["paused"] = false;
                 data["insertIndex"] = 1;
 
                 //Playlist erstellen
-                getAudioFiles();
+                getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
 
                 //1. Song starten und Clients informieren
                 playFile();
@@ -278,16 +281,15 @@ function setVolume() {
 }
 
 //Playlist erstellen: dazu rekursiv ueber Verzeichnisse gehen
-function getAudioFiles() {
+function getAudioFiles(dir) {
 
-    //aktuelles Audioverzeichnis ermitteln und Dateien daraus ermitteln
-    let dir = configFile["audioDir"] + "/" + data["audioMode"];
+    //Ergebnisse sammeln
+    let results = [];
 
     //Dateien in Verzeichnis auflisten
     let list = fs.readdirSync(dir);
 
-    //Ueber Dateien iterieren und sammeln
-    let results = [];
+    //Ueber Dateien iterieren
     list.forEach(function (file) {
 
         //Infos ueber Datei holen
@@ -300,12 +302,13 @@ function getAudioFiles() {
         }
 
         //es ist eine Datei -> nur mp3-Dateien sammeln
-        else if (path.extname(file).toLowerCase() === '.mp3') {
-            results.push(file);
+        else {
+            if (path.extname(file).toLowerCase() === '.mp3') {
+                results.push(file);
+            }
         }
     });
 
-    //Dateien in zufaelliger Reihenfolge
-    data["files"] = shuffle(results);
-    console.log(data["files"]);
+    //Datei-Liste zurueckgeben
+    return results;
 }
