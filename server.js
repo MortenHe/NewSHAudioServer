@@ -78,6 +78,15 @@ wss.on('connection', function connection(ws) {
         //Pro Typ gewisse Aktionen durchfuehren
         switch (type) {
 
+            //Pause-Status toggeln
+            case 'toggle-paused':
+
+                //Pausenstatus toggeln, Player-Pause toggeln und clients informieren
+                data["paused"] = !data["paused"];
+                player.playPause();
+                messageArr.push("paused");
+                break;
+
             //Song wurde vom Nutzer weitergeschaltet
             case 'change-item':
 
@@ -102,21 +111,13 @@ wss.on('connection', function connection(ws) {
                 messageArr.push("files", "paused", "insertIndex");
                 break;
 
-            //Sprung zu einem bestimmten Titel in Playlist
+            //Titel aus Playlist als 1. Titel setzen und derzeit 1. Titel an diese Stelle verschieben
             case "jump-to":
 
-                //Playlist neu erstellen, damit neu gewaehlter Titel an 1. Stelle steht
-                shiftArray(value);
-
-                //Falls man nicht ueber insertIndex springt -> insertIndex erhalten
-                if (value < data["insertIndex"]) {
-                    data["insertIndex"] = data["insertIndex"] - value;
-                }
-
-                //es wurde ueber den uebersprungen -> insertIndex zuruecksetzen 
-                else {
-                    data["insertIndex"] = 1;
-                }
+                //Ausgewaehlten Titel and 1. Position setzen und anderen Titel dorthin verschieben
+                let currentFile = data["files"][0];
+                data["files"][0] = data["files"][value];
+                data["files"][value] = currentFile
 
                 //Es ist nicht mehr pausiert
                 data["paused"] = false;
@@ -124,15 +125,6 @@ wss.on('connection', function connection(ws) {
                 //Song abspielen und clients informieren
                 playFile();
                 messageArr.push("files", "paused", "insertIndex");
-                break;
-
-            //Pause-Status toggeln
-            case 'toggle-paused':
-
-                //Pausenstatus toggeln, Player-Pause toggeln und clients informieren
-                data["paused"] = !data["paused"];
-                player.playPause();
-                messageArr.push("paused");
                 break;
 
             //Titel einreihen
