@@ -1,0 +1,6 @@
+- remve from playlist hover media bug
+- hover Titel fett
+- Trackby für Trefferliste
+- Nur Reihenfolge der Tracks von Server erhalten, Anzeige der Titel über Array
+- config pw vs. marlen
+- Material?
