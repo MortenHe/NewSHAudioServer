@@ -111,6 +111,13 @@ wss.on('connection', function connection(ws) {
                 messageArr.push("files", "paused", "insertIndex");
                 break;
 
+            //Playlist umsortieren und Clients informieren
+            case 'sort-playlist':
+                console.log("move item " + value.from + " to " + value.to);
+                data["files"] = arrayMove(data["files"], value.from, value.to);
+                messageArr.push("files");
+                break;
+
             //Titel aus Playlist als 1. Titel setzen und derzeit 1. Titel an diese Stelle verschieben
             case "jump-to":
 
