@@ -16,7 +16,7 @@ data["paused"] = false;
 data["insertIndex"] = 1;
 
 //Wie lange soll ein Titel gehen
-const fakeTrackTimeConst = 50;
+const fakeTrackTimeConst = 500;
 var fakeTrackTime = fakeTrackTimeConst;
 
 //Aus Config auslesen wo die Audio-Dateien liegen
@@ -28,18 +28,25 @@ fakeTrackTimeCountdownID = setInterval(() => {
     countdownFakeTrackTime();
 }, 1000);
 
+//Fake Zeit eines Tracks runterzaehlen
 function countdownFakeTrackTime() {
 
+    //Track laeuft noch -> Zeit runterzaehlen
     if (fakeTrackTime > 0) {
         console.log("current track time " + fakeTrackTime);
         fakeTrackTime--;
     }
+
+    //Track ist fertig -> zum naechsten Song gehen
     else {
         goToNextSong();
     }
 }
 
+//Zum naechsten Song gehen
 function goToNextSong() {
+
+    //Fake Gesamtzeit des Titels zuruekcsetzen
     fakeTrackTime = fakeTrackTimeConst;
 
     //In Playlist einen Schritt weitergehen
@@ -134,6 +141,9 @@ wss.on('connection', function connection(ws) {
 
                 //Es ist nicht mehr pausiert
                 data["paused"] = false;
+
+                //Fake wait
+                wait(2000);
 
                 //Song abspielen und clients informieren
                 playFile();
@@ -304,4 +314,13 @@ function getAudioFiles(dir) {
 
     //Datei-Liste zurueckgeben
     return results;
+}
+
+//Fake wait x milliseconds
+function wait(ms) {
+    var start = Date.now(),
+        now = start;
+    while (now - start < ms) {
+        now = Date.now();
+    }
 }
