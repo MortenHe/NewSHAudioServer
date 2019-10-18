@@ -30,7 +30,7 @@ data["paused"] = false;
 data["insertIndex"] = 1;
 
 //Aus Config auslesen wo die Audio-Dateien liegen
-const configFile = fs.readJsonSync('config.json');
+const configFile = fs.readJsonSync(__dirname + "/config.json");
 data["audioMode"] = process.argv[2] || "sh";
 
 //initiale Lautstaerke setzen
