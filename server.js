@@ -1,10 +1,17 @@
 //Mplayer + Wrapper anlegen
 const createPlayer = require('mplayer-wrapper');
 const player = createPlayer();
+const { spawn } = require('child_process');
 
 //WebSocketServer anlegen und starten
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 9090, clientTracking: true });
+
+//GPIO Buttons starten
+const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/" + "button.js"]);
+buttons_gpio.stdout.on("data", (data) => {
+    console.log("button event: " + data);
+});
 
 //filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
