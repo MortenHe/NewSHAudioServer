@@ -14,6 +14,12 @@ buttons_gpio.stdout.on("data", (data) => {
     console.log("button event: " + data);
 });
 
+//USB RFID Reader starten (Umschalten zwischen Apps)
+const rfid_usb = spawn("node", [__dirname + "/../WSRFID/" + "rfid.js", port]);
+rfid_usb.stdout.on('data', (data) => {
+    console.log("rfid event: " + data);
+});
+
 //filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
 const path = require('path');
