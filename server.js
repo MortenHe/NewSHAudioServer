@@ -17,6 +17,10 @@ const port = 9090;
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: port, clientTracking: true });
 
+//Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
+const countdownTime = 10;
+var countdownID = null;
+
 //Aus Config auslesen wo die Audio-Dateien liegen
 const configFile = fs.readJsonSync(__dirname + "/config.json");
 data["audioMode"] = process.argv[2] || "sh";
@@ -45,6 +49,7 @@ data["volume"] = 80;
 data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
+data["countdownTime"] = -1;
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -105,10 +110,23 @@ wss.on('connection', function connection(ws) {
                 data["paused"] = !data["paused"];
                 player.playPause();
                 messageArr.push("paused");
+
+                //Wenn jetzt pausiert ist, Countdown starten
+                if (data["paused"]) {
+                    startCountdown();
+                }
+
+                //Pausierung wurde beendet -> Countdown beenden
+                else {
+                    resetCountdown();
+                }
                 break;
 
             //Song wurde vom Nutzer weitergeschaltet
             case 'change-item':
+
+                //Countdown abbrechen
+                resetCountdown();
 
                 //wenn der naechste Song kommen soll, insertOffeset berechnen
                 if (value === 1) {
@@ -140,6 +158,9 @@ wss.on('connection', function connection(ws) {
 
             //Titel aus Playlist als 1. Titel setzen und derzeit 1. Titel an diese Stelle verschieben
             case "jump-to":
+
+                //Countdown abbrechen
+                resetCountdown();
 
                 //Ausgewaehlten Titel and 1. Position setzen und anderen Titel dorthin verschieben
                 let currentFile = data["files"][0];
@@ -191,6 +212,9 @@ wss.on('connection', function connection(ws) {
             //Zwischen Liederlisten wechseln (Musiksammlung SH, MH, Kids)
             case 'set-audio-mode':
 
+                //Countdown abbrechen
+                resetCountdown();
+
                 //Wo liegen die Dateien des neuen Modus?
                 data["audioMode"] = value;
                 let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
@@ -228,13 +252,7 @@ wss.on('connection', function connection(ws) {
 
             //System herunterfahren
             case "shutdown":
-                console.log("shutdown");
-
-                //Shutdown-Info an Clients schicken
-                sendClientInfo(["shutdown"]);
-
-                //Pi herunterfahren
-                execSync("shutdown -h now");
+                shutdown();
                 break;
         }
 
@@ -243,7 +261,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioMode"]
+    let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioMode", "countdownTime"]
 
     //Ueber Messages gehen, die an Clients geschickt werden
     WSConnectMessageArr.forEach(message => {
@@ -330,4 +348,52 @@ function getAudioFiles(dir) {
 
     //Datei-Liste zurueckgeben
     return results;
+}
+
+
+//Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
+function startCountdown() {
+    console.log("start countdown")
+    data["countdownTime"] = countdownTime;
+    countdownID = setInterval(countdown, 1000);
+}
+
+//Countdown fuer Shutdown wieder stoppen, weil nun etwas passiert und Countdowntime zuruecksetzen und Clients informieren
+function resetCountdown() {
+    console.log("reset countdown");
+    clearInterval(countdownID);
+    countdownID = null;
+    data["countdownTime"] = -1;
+    sendClientInfo(["countdownTime"]);
+}
+
+//Bei Inaktivitaet Countdown runterzaehlen und Shutdown ausfuehren
+function countdown() {
+
+    //Wenn der Countdown noch nicht abgelaufen ist
+    if (data["countdownTime"] >= 0) {
+        console.log("shutdown in " + data["countdownTime"] + " seconds");
+
+        //Anzahl der Sekunden bis Countdown an Clients schicken
+        sendClientInfo(["countdownTime"]);
+
+        //Zeit runterzaehlen
+        data["countdownTime"]--;
+    }
+
+    //Countdown ist abgelaufen, Shutdown durchfuehren
+    else {
+        shutdown();
+    }
+}
+
+//Pi herunterfahren
+function shutdown() {
+    console.log("shutdown");
+
+    //Shutdown-Info an Clients schicken
+    sendClientInfo(["shutdown"]);
+
+    //Pi herunterfahren
+    //execSync("shutdown -h now");
 }
