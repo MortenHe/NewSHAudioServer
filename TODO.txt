@@ -1,2 +1,0 @@
-MEDIUM
-- mock-server weitere Funktionen (pause stoppt fakeCountdown)
