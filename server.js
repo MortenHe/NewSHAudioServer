@@ -3,23 +3,6 @@ const createPlayer = require('mplayer-wrapper');
 const player = createPlayer();
 const { spawn } = require('child_process');
 
-//WebSocketServer anlegen und starten
-const port = 9090;
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: port, clientTracking: true });
-
-//GPIO Buttons starten
-const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/" + "button.js", port]);
-buttons_gpio.stdout.on("data", (data) => {
-    console.log("button event: " + data);
-});
-
-//USB RFID Reader starten (Umschalten zwischen Apps)
-const rfid_usb = spawn("node", [__dirname + "/../WSRFID/" + "rfid.js", port]);
-rfid_usb.stdout.on('data', (data) => {
-    console.log("rfid event: " + data);
-});
-
 //filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
 const path = require('path');
@@ -29,16 +12,39 @@ const arrayMove = require('array-move');
 //Befehle auf Kommandzeile ausfuehren (volume)
 const { execSync } = require('child_process');
 
+//WebSocketServer anlegen und starten
+const port = 9090;
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({ port: port, clientTracking: true });
+
+//Aus Config auslesen wo die Audio-Dateien liegen
+const configFile = fs.readJsonSync(__dirname + "/config.json");
+data["audioMode"] = process.argv[2] || "sh";
+
+//GPIO Buttons starten, falls konfiguriert
+if (configFile.GPIOButtons) {
+    console.log("Use GPIO Buttons");
+    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/" + "button.js", port]);
+    buttons_gpio.stdout.on("data", (data) => {
+        console.log("button event: " + data);
+    });
+}
+
+//USB RFID Reader starten, falls konfiguriert
+if (configFile.USBRFIDReader) {
+    console.log("Use USB RFID Reader");
+    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/" + "rfid.js", port]);
+    rfid_usb.stdout.on('data', (data) => {
+        console.log("rfid event: " + data);
+    });
+}
+
 //Aktuelle Infos zu Volume / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
 data["volume"] = 80;
 data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
-
-//Aus Config auslesen wo die Audio-Dateien liegen
-const configFile = fs.readJsonSync(__dirname + "/config.json");
-data["audioMode"] = process.argv[2] || "sh";
 
 //initiale Lautstaerke setzen
 setVolume();
