@@ -27,7 +27,7 @@ var countdownID = null;
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
     console.log("Use GPIO Buttons");
-    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/" + "button.js", port]);
+    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/button.js", port]);
     buttons_gpio.stdout.on("data", (data) => {
         console.log("button event: " + data);
     });
@@ -36,7 +36,7 @@ if (configFile.GPIOButtons) {
 //USB RFID Reader starten, falls konfiguriert
 if (configFile.USBRFIDReader) {
     console.log("Use USB RFID Reader");
-    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/" + "rfid.js", port]);
+    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/rfid.js", port]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
     });
@@ -314,7 +314,7 @@ function shiftArray(splitPosition) {
 
 //Lautstaerke setzen
 function setVolume() {
-    let initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
+    const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
     console.log(initialVolumeCommand)
     execSync(initialVolumeCommand);
 }
