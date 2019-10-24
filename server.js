@@ -17,13 +17,12 @@ const port = 9090;
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: port, clientTracking: true });
 
-//Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
-const countdownTime = 10;
-var countdownID = null;
-
-//Aus Config auslesen wo die Audio-Dateien liegen
+//Config file laden
 const configFile = fs.readJsonSync(__dirname + "/config.json");
-data["audioMode"] = process.argv[2] || "sh";
+
+//Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
+const countdownTime = configFile.countdownTime;
+var countdownID = null;
 
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
@@ -50,6 +49,9 @@ data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
 data["countdownTime"] = -1;
+
+//Welcher Audio Mode ist zu Beginn aktiv?
+data["audioMode"] = process.argv[2] || "sh";
 
 //initiale Lautstaerke setzen
 setVolume();
