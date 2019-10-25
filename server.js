@@ -51,7 +51,8 @@ data["insertIndex"] = 1;
 data["countdownTime"] = -1;
 
 //Welcher Audio Mode ist zu Beginn aktiv?
-data["audioMode"] = process.argv[2] || "sh";
+data["audioMode"] = process.argv[2] || configFile.audioMode;
+console.log("audioMode is " + data["audioMode"]);
 
 //initiale Lautstaerke setzen
 setVolume();
