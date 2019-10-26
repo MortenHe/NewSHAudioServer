@@ -1,6 +1,6 @@
 {
     "audioDir": "/media/usb_audio/shplayer",
-    "audioOutput": "Digital|PCM|Master|Headphone,1",
+    "audioOutput": "Digital",
     "audioMode": "kids",
     "countdownTime": 300,
     "GPIOButtons": false,
