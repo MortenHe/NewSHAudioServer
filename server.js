@@ -219,7 +219,7 @@ wss.on('connection', function connection(ws) {
                 resetCountdown();
 
                 //Wo liegen die Dateien des neuen Modus?
-                data["audioMode"] = value;
+                data["audioMode"] = value.audioMode;
                 let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
                 data["files"] = shuffle(allFiles);
 
