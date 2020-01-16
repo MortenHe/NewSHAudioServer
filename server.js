@@ -44,7 +44,7 @@ if (configFile.USBRFIDReader) {
 
 //Aktuelle Infos zu Volume / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
-data["volume"] = 80;
+data["volume"] = configFile["volume"];
 data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
@@ -53,6 +53,9 @@ data["countdownTime"] = -1;
 //Welcher Audio Mode ist zu Beginn aktiv?
 data["audioMode"] = process.argv[2] || configFile.audioMode;
 console.log("audioMode is " + data["audioMode"]);
+
+//Modus fuer Autostart merken
+writeAutostartFile();
 
 //initiale Lautstaerke setzen
 setVolume();
@@ -223,6 +226,9 @@ wss.on('connection', function connection(ws) {
                 let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
                 data["files"] = shuffle(allFiles);
 
+                //neuen Modus fuer Autostart merken
+                writeAutostartFile()
+
                 //Pause und InsertIndex zuruecksetzen
                 data["paused"] = false;
                 data["insertIndex"] = 1;
@@ -311,6 +317,11 @@ function sendClientInfo(messageArr) {
 //Anfangspunkt eines Arrays verschieben: [1, 2, 3, 4, 5] => [3, 4, 5, 1, 2]
 function shiftArray(splitPosition) {
     data["files"] = data["files"].slice(splitPosition).concat(data["files"].slice(0, splitPosition));
+}
+
+//Aktuellen Modus fuer Autostart merken
+function writeAutostartFile() {
+    fs.writeFile("/home/pi/wss-install/last-player", "AUTOSTART=sudo /home/pi/mh_prog/NewSHAudioServer/startnodesh.sh " + data["audioMode"]);
 }
 
 //Lautstaerke setzen
