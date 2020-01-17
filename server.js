@@ -48,6 +48,7 @@ data["volume"] = configFile["volume"];
 data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
+data["secondsPlayed"] = 0;
 data["countdownTime"] = -1;
 
 //Welcher Audio Mode ist zu Beginn aktiv?
@@ -82,6 +83,14 @@ player.on('playlist-finish', () => {
 
     //Datei abspielen
     playFile();
+});
+
+//Wenn time_pos property geliefert wird
+player.on('time_pos', (totalSecondsFloat) => {
+
+    //Wie viele Sekunden ist der Track schon gelaufen? Float zu int: 13.4323 => 13
+    data["secondsPlayed"] = Math.trunc(totalSecondsFloat);
+    console.log("track progress ", data["secondsPlayed"]);
 });
 
 //alle mp3-Dateien in diesem Modus (Unterordner) ermitteln und random list erstellen
@@ -134,18 +143,27 @@ wss.on('connection', function connection(ws) {
                 //Countdown abbrechen
                 resetCountdown();
 
-                //wenn der naechste Song kommen soll, insertOffeset berechnen
+                //wenn der naechste Song kommen soll, insertOffeset berechnen und Titel-Array neu erzeugen
                 if (value === 1) {
                     data["insertIndex"] = data["insertIndex"] > 1 ? data["insertIndex"] - 1 : 1;
+                    shiftArray(value);
                 }
 
-                //wenn der vorherige Song kommen soll, insertOffeset berechnen
+                //wenn der previous Button gedrueckt wurden
                 else {
-                    data["insertIndex"] = data["insertIndex"] < data["files"].length ? data["insertIndex"] + 1 : data["insertIndex"];
-                }
 
-                //Titel-Array neu erzeugen
-                shiftArray(value);
+                    //Wenn weniger als x Sekunden vergangen sind -> zum vorherigen Titel springen, insertOffeset berechnen und Titel-Array neu erzeugen
+                    if (data["secondsPlayed"] < 3) {
+                        console.log("go to previous track")
+                        data["insertIndex"] = data["insertIndex"] < data["files"].length ? data["insertIndex"] + 1 : data["insertIndex"];
+                        shiftArray(value);
+                    }
+
+                    //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
+                    else {
+                        console.log("repeat current track");
+                    }
+                }
 
                 //Es ist nicht mehr pausiert
                 data["paused"] = false;
