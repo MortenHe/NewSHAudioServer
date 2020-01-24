@@ -1,7 +1,7 @@
 {
     "audioDir": "/media/usb_audio/shplayer",
     "audioOutput": "Digital",
-    "volume": 30,
+    "volume": 80,
     "audioMode": "kids",
     "countdownTime": 300,
     "GPIOButtons": false,
