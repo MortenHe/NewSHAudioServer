@@ -90,7 +90,7 @@ player.on('time_pos', (totalSecondsFloat) => {
 
     //Wie viele Sekunden ist der Track schon gelaufen? Float zu int: 13.4323 => 13
     data["secondsPlayed"] = Math.trunc(totalSecondsFloat);
-    console.log("track progress ", data["secondsPlayed"]);
+    console.log("track progress " + data["secondsPlayed"]);
 });
 
 //alle mp3-Dateien in diesem Modus (Unterordner) ermitteln und random list erstellen
