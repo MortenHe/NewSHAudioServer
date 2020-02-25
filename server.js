@@ -345,7 +345,7 @@ function writeAutostartFile() {
 //Lautstaerke setzen
 function setVolume() {
     const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
-    console.log(initialVolumeCommand)
+    console.log(initialVolumeCommand);
     execSync(initialVolumeCommand);
 }
 
