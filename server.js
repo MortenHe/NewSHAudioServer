@@ -339,7 +339,7 @@ function shiftArray(splitPosition) {
 
 //Aktuellen Modus fuer Autostart merken
 function writeAutostartFile() {
-    fs.writeFile("/home/pi/wss-install/last-player", "AUTOSTART=sudo /home/pi/mh_prog/NewSHAudioServer/startnodesh.sh " + data["audioMode"]);
+    fs.writeFile("/home/" + configFile["user"] + "/wss-install/last-player", "AUTOSTART=sudo /home/" + configFile["user"] + "/mh_prog/NewSHAudioServer/startnodesh.sh " + data["audioMode"]);
 }
 
 //Lautstaerke setzen
