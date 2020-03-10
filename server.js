@@ -344,9 +344,14 @@ function writeAutostartFile() {
 
 //Lautstaerke setzen
 function setVolume() {
-    const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
-    console.log(initialVolumeCommand);
-    execSync(initialVolumeCommand);
+    if (configFile["audioOutput"]) {
+        const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
+        console.log(initialVolumeCommand);
+        execSync(initialVolumeCommand);
+    }
+    else {
+        console.log("no audioOutput configured");
+    }
 }
 
 //Playlist erstellen: dazu rekursiv ueber Verzeichnisse gehen
