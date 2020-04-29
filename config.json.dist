@@ -1,6 +1,6 @@
 {
     "user": "pi",
-    "audioDir": "/media/usb_audio/shplayer",
+    "audioDir": "/media/usb_audio/Nextcloud/audio/shp",
     "audioOutput": "Digital",
     "volume": 80,
     "audioMode": "kids",
