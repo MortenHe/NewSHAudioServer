@@ -6,8 +6,10 @@ const { spawn } = require('child_process');
 //filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
 const path = require('path');
+const slash = require('slash');
 const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
+const glob = require('glob');
 
 //Befehle auf Kommandzeile ausfuehren (volume)
 const { execSync } = require('child_process');
@@ -17,8 +19,15 @@ const port = 9090;
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: port, clientTracking: true });
 
+//Bei Windwos aktuelles Verzeichnis mit Forward-Slashes
+let dirname = __dirname;
+console.log(dirname)
+if (process.platform === "win32") {
+    dirname = slash(dirname);
+}
+
 //Config file laden
-const configFile = fs.readJsonSync(__dirname + "/config.json");
+const configFile = fs.readJsonSync(dirname + "/config.json");
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -27,7 +36,7 @@ var countdownID = null;
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
     console.log("Use GPIO Buttons");
-    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/button.js", port]);
+    const buttons_gpio = spawn("node", [dirname + "/../WSGpioButtons/button.js", port]);
     buttons_gpio.stdout.on("data", (data) => {
         console.log("button event: " + data);
     });
@@ -36,7 +45,7 @@ if (configFile.GPIOButtons) {
 //USB RFID Reader starten, falls konfiguriert
 if (configFile.USBRFIDReader) {
     console.log("Use USB RFID Reader");
-    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/rfid.js", port]);
+    const rfid_usb = spawn("node", [dirname + "/../WSRFID/rfid.js", port]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
     });
@@ -339,7 +348,7 @@ function shiftArray(splitPosition) {
 
 //Aktuellen Modus fuer Autostart merken
 function writeAutostartFile() {
-    fs.writeFile("/home/" + configFile["user"] + "/wss-install/last-player", "AUTOSTART=sudo /home/" + configFile["user"] + "/mh_prog/NewSHAudioServer/startnodesh.sh " + data["audioMode"]);
+    fs.writeFile(configFile["wssInstallDir"] + "/last-player", "AUTOSTART=sudo " + dirname + "/startnodesh.sh " + data["audioMode"]);
 }
 
 //Lautstaerke setzen
@@ -354,39 +363,10 @@ function setVolume() {
     }
 }
 
-//Playlist erstellen: dazu rekursiv ueber Verzeichnisse gehen
+//Playlist erstellen mit mp3 Files dieses Modes
 function getAudioFiles(dir) {
-
-    //Ergebnisse sammeln
-    let results = [];
-
-    //Dateien in Verzeichnis auflisten
-    let list = fs.readdirSync(dir);
-
-    //Ueber Dateien iterieren
-    list.forEach(function (file) {
-
-        //Infos ueber Datei holen
-        file = path.resolve(dir, file);
-        let stat = fs.statSync(file);
-
-        //Wenn es ein Verzeichnis ist -> Unterverzeichnis aufrufen
-        if (stat && stat.isDirectory()) {
-            results = results.concat(getAudioFiles(file));
-        }
-
-        //es ist eine Datei -> nur mp3-Dateien sammeln
-        else {
-            if (path.extname(file).toLowerCase() === '.mp3') {
-                results.push(file);
-            }
-        }
-    });
-
-    //Datei-Liste zurueckgeben
-    return results;
+    return glob.sync(configFile["audioDir"] + "/" + data["audioMode"] + "/**/*.mp3")
 }
-
 
 //Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
 function startCountdown() {
