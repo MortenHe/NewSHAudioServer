@@ -10,5 +10,10 @@
     "shuffle-array": "^1.0.1",
     "slash": "^3.0.0",
     "ws": "^7.3.1"
+  },
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MortenHe/NewSHAudioServer"
   }
 }
