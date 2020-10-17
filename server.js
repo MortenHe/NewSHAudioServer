@@ -103,8 +103,7 @@ player.on('time_pos', (totalSecondsFloat) => {
 });
 
 //alle mp3-Dateien in diesem Modus (Unterordner) ermitteln und random list erstellen
-let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
-data["files"] = shuffle(allFiles);
+getAudioFiles();
 
 //1. Song starten
 playFile();
@@ -250,8 +249,7 @@ wss.on('connection', function connection(ws) {
 
                 //Wo liegen die Dateien des neuen Modus?
                 data["audioMode"] = value.audioMode;
-                let allFiles = getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
-                data["files"] = shuffle(allFiles);
+                getAudioFiles();
 
                 //neuen Modus fuer Autostart merken
                 writeAutostartFile()
@@ -259,9 +257,6 @@ wss.on('connection', function connection(ws) {
                 //Pause und InsertIndex zuruecksetzen
                 data["paused"] = false;
                 data["insertIndex"] = 1;
-
-                //Playlist erstellen
-                getAudioFiles(configFile["audioDir"] + "/" + data["audioMode"]);
 
                 //1. Song starten und Clients informieren
                 playFile();
@@ -364,8 +359,9 @@ function setVolume() {
 }
 
 //Playlist erstellen mit mp3 Files dieses Modes
-function getAudioFiles(dir) {
-    return glob.sync(configFile["audioDir"] + "/" + data["audioMode"] + "/**/*.mp3")
+function getAudioFiles() {
+    let allFiles = glob.sync(configFile["audioDir"] + "/" + data["audioMode"] + "/**/*.mp3")
+    data["files"] = shuffle(allFiles);
 }
 
 //Countdown fuer Shutdown zuruecksetzen und starten, weil gerade nichts mehr passiert
