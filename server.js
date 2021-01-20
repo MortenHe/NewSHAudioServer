@@ -5,7 +5,6 @@ const { spawn } = require('child_process');
 
 //filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
-const path = require('path');
 const slash = require('slash');
 const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
@@ -21,7 +20,6 @@ const wss = new WebSocket.Server({ port: port, clientTracking: true });
 
 //Bei Windwos aktuelles Verzeichnis mit Forward-Slashes
 let dirname = __dirname;
-console.log(dirname)
 if (process.platform === "win32") {
     dirname = slash(dirname);
 }
@@ -292,13 +290,9 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    let WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioMode", "countdownTime"]
-
-    //Ueber Messages gehen, die an Clients geschickt werden
+    const WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioMode", "countdownTime"]
     WSConnectMessageArr.forEach(message => {
-
-        //Message-Object erzeugen und an Client schicken
-        let messageObj = {
+        const messageObj = {
             "type": message,
             "value": data[message]
         };
@@ -308,20 +302,16 @@ wss.on('connection', function connection(ws) {
 
 //Datei abspielen (immer 1. Datei, da aktueller Titel oben steht und playlist entsprechend angepasst wird)
 function playFile() {
-    console.log("playfile " + data["files"][0]);
+    console.log("load file " + data["files"][0]);
 
     //Datei laden und starten
     player.exec('loadfile "' + data["files"][0] + '"');
 }
 
-//Infos ans WS-Clients schicken
+//Message-Infos ans WS-Clients schicken
 function sendClientInfo(messageArr) {
-
-    //Ueber Liste der Messages gehen
     messageArr.forEach(message => {
-
-        //Message-Object erzeugen
-        let messageObj = {
+        const messageObj = {
             "type": message,
             "value": data[message]
         };
@@ -360,7 +350,7 @@ function setVolume() {
 
 //Playlist erstellen mit mp3 Files dieses Modes
 function getAudioFiles() {
-    let allFiles = glob.sync(configFile["audioDir"] + "/" + data["audioMode"] + "/**/*.mp3")
+    const allFiles = glob.sync(configFile["audioDir"] + "/" + data["audioMode"] + "/**/*.mp3")
     data["files"] = shuffle(allFiles);
 }
 
