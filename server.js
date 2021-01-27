@@ -11,7 +11,7 @@ const arrayMove = require('array-move');
 const glob = require('glob');
 
 //Befehle auf Kommandzeile ausfuehren (volume)
-const { execSync } = require('child_process');
+const exec = require('child_process').exec;
 
 //WebSocketServer anlegen und starten
 const port = 9090;
@@ -341,7 +341,7 @@ function setVolume() {
     if (configFile["audioOutput"]) {
         const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
         console.log(initialVolumeCommand);
-        execSync(initialVolumeCommand);
+        exec(initialVolumeCommand);
     }
     else {
         console.log("no audioOutput configured");
