@@ -26,6 +26,7 @@ if (process.platform === "win32") {
 
 //Config file laden
 const configFile = fs.readJsonSync(dirname + "/config.json");
+const audioDir = configFile.audioDir;
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -51,12 +52,13 @@ if (configFile.USBRFIDReader) {
 
 //Aktuelle Infos zu Volume / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
-data["volume"] = configFile["volume"];
+data["volume"] = configFile.volume;
 data["files"] = [];
 data["paused"] = false;
 data["insertIndex"] = 1;
 data["secondsPlayed"] = 0;
 data["countdownTime"] = -1;
+data["audioModes"] = fs.readJsonSync(audioDir + "/audioModes.json");
 
 //Welcher Audio Mode ist zu Beginn aktiv?
 data["audioMode"] = process.argv[2] || configFile.audioMode;
@@ -290,7 +292,7 @@ wss.on('connection', function connection(ws) {
     });
 
     //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    const WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioMode", "countdownTime"]
+    const WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioModes", "audioMode", "countdownTime"]
     WSConnectMessageArr.forEach(message => {
         const messageObj = {
             "type": message,
@@ -333,13 +335,13 @@ function shiftArray(splitPosition) {
 
 //Aktuellen Modus fuer Autostart merken
 function writeAutostartFile() {
-    fs.writeFile(configFile["wssInstallDir"] + "/last-player", "AUTOSTART=sudo " + dirname + "/startnodesh.sh " + data["audioMode"]);
+    fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/startnodesh.sh " + data["audioMode"]);
 }
 
 //Lautstaerke setzen
 function setVolume() {
-    if (configFile["audioOutput"]) {
-        const initialVolumeCommand = "sudo amixer sset " + configFile["audioOutput"] + " " + + data["volume"] + "% -M";
+    if (configFile.audioOutput) {
+        const initialVolumeCommand = "amixer sset " + configFile.audioOutput + " " + + data["volume"] + "% -M";
         console.log(initialVolumeCommand);
         exec(initialVolumeCommand);
     }
@@ -350,7 +352,7 @@ function setVolume() {
 
 //Playlist erstellen mit mp3 Files dieses Modes
 function getAudioFiles() {
-    const allFiles = glob.sync(configFile["audioDir"] + "/" + data["audioMode"] + "/**/*.mp3")
+    const allFiles = glob.sync(audioDir + "/" + data["audioMode"] + "/**/*.mp3")
     data["files"] = shuffle(allFiles);
 }
 

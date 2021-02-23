@@ -1,6 +1,5 @@
 {
     "audioDir": "/home/pi/Nextcloud/audio/shp",
-    "wssInstallDir": "/home/pi/wss-install",
     "audioOutput": "Speaker|Master|Digital|PCM",
     "volume": 80,
     "audioMode": "kids",
