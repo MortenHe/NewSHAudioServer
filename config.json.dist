@@ -1,9 +1,0 @@
-{
-    "audioDir": "/home/pi/Nextcloud/audio/shp",
-    "audioOutput": "Speaker|Master|Digital|PCM",
-    "volume": 80,
-    "audioMode": "kids",
-    "countdownTime": 300,
-    "GPIOButtons": false,
-    "USBRFIDReader": false
-}

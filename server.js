@@ -25,8 +25,8 @@ if (process.platform === "win32") {
 }
 
 //Config file laden
-const configFile = fs.readJsonSync(dirname + "/config.json");
-const audioDir = configFile.audioDir;
+const configFile = fs.readJsonSync(dirname + "/../AudioServer/config.json");
+const audioDir = configFile.audioDir + "/shp";
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -61,7 +61,7 @@ data["countdownTime"] = -1;
 data["audioModes"] = fs.readJsonSync(audioDir + "/audioModes.json");
 
 //Welcher Audio Mode ist zu Beginn aktiv?
-data["audioMode"] = process.argv[2] || configFile.audioMode;
+data["audioMode"] = process.argv[2] || configFile.shpAudioMode;
 console.log("audioMode is " + data["audioMode"]);
 
 //Modus fuer Autostart merken
