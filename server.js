@@ -335,7 +335,7 @@ function shiftArray(splitPosition) {
 
 //Aktuellen Modus fuer Autostart merken
 function writeAutostartFile() {
-    fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/startnodesh.sh " + data["audioMode"]);
+    fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/../AudioServer/startnodesh.sh " + data["audioMode"]);
 }
 
 //Lautstaerke setzen
