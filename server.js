@@ -143,6 +143,18 @@ wss.on('connection', function connection(ws) {
         //Pro Typ gewisse Aktionen durchfuehren
         switch (type) {
 
+            //Pause, wenn Playlist gerade laeuft
+            case 'pause-if-playing':
+
+                //Wenn wir gerade in der Playlist sind und nicht pasuiert ist -> pausieren
+                if (data["position"] !== -1 && !data["paused"]) {
+                    data["paused"] = true;
+                    player.playPause();
+                    messageArr.push("paused");
+                    startCountdown();
+                }
+                break;
+
             //Pause-Status toggeln
             case 'toggle-paused':
 
