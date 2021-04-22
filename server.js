@@ -61,7 +61,7 @@ if (configFile.STT) {
     });
 
     //STT-Suche
-    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js", configFile.port]);
+    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js", port]);
     stt_search.stdout.on('data', (data) => {
         console.log("stt search event: " + data);
     });
