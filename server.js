@@ -50,6 +50,23 @@ if (configFile.USBRFIDReader) {
     });
 }
 
+//STT starten, falls konfiguriert
+if (configFile.STT) {
+    console.log("Use Speach to text");
+
+    //JSON-File fuer Indexerzeugung erstellen
+    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js", configFile.port]);
+    stt_index.stdout.on('data', (data) => {
+        console.log("stt index event: " + data);
+    });
+
+    //STT-Suche
+    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js", configFile.port]);
+    stt_search.stdout.on('data', (data) => {
+        console.log("stt search event: " + data);
+    });
+}
+
 //Aktuelle Infos zu Volume / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
 var data = [];
 data["volume"] = configFile.volume;
