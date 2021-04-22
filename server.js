@@ -55,7 +55,7 @@ if (configFile.STT) {
     console.log("Use Speach to text");
 
     //JSON-File fuer Indexerzeugung erstellen
-    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js", configFile.port]);
+    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js", port]);
     stt_index.stdout.on('data', (data) => {
         console.log("stt index event: " + data);
     });
