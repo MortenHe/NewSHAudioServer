@@ -54,11 +54,7 @@ if (configFile.USBRFIDReader) {
 if (configFile.STT) {
     console.log("Use Speach to text");
 
-    //JSON-File fuer Indexerzeugung erstellen
-    const stt_index = spawn("node", [dirname + "/../WSSTT/createJsonIndexFile.js", port]);
-    stt_index.stdout.on('data', (data) => {
-        console.log("stt index event: " + data);
-    });
+    //JSON-File fuer Indexerzeugung wird bei AudioServer erstellt (wegen MainJSON)
 
     //STT-Suche
     const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js", port]);
