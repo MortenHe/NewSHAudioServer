@@ -71,6 +71,7 @@ data["paused"] = false;
 data["insertIndex"] = 1;
 data["secondsPlayed"] = 0;
 data["countdownTime"] = -1;
+data["userMode"] = configFile.userMode;
 data["audioModes"] = fs.readJsonSync(audioDir + "/audioModes.json");
 
 //Welcher Audio Mode ist zu Beginn aktiv?
@@ -316,8 +317,8 @@ wss.on('connection', function connection(ws) {
         sendClientInfo(messageArr);
     });
 
-    //Clients einmalig bei der Verbindung ueber div. Wert informieren
-    const WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioModes", "audioMode", "countdownTime"]
+    //Clients einmalig bei der erstmaliger Verbindung ueber div. Wert informieren
+    const WSConnectMessageArr = ["volume", "paused", "files", "insertIndex", "audioModes", "audioMode", "userMode", "countdownTime"]
     WSConnectMessageArr.forEach(message => {
         const messageObj = {
             "type": message,
