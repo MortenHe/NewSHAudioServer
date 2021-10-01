@@ -378,7 +378,7 @@ function setVolume() {
 
 //Playlist erstellen mit mp3 Files dieses Modes
 function getAudioFiles() {
-    const allFiles = glob.sync(audioDir + "/" + data["audioMode"] + "/**/*.mp3", { nocase: true })
+    const allFiles = glob.sync(audioDir + "/" + data["audioMode"] + "/**/*.mp3", { nocase: true });
     data["files"] = shuffle(allFiles);
 }
 
