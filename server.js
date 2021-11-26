@@ -159,6 +159,7 @@ wss.on('connection', function connection(ws) {
                 //Pausenstatus toggeln, Player-Pause toggeln und clients informieren
                 data["paused"] = !data["paused"];
                 player.playPause();
+                playSound("pause.wav");
                 messageArr.push("paused");
 
                 //Wenn jetzt pausiert ist, Countdown starten
@@ -425,7 +426,7 @@ function countdown() {
 //Einzelsound abspielen
 function playSound(sound) {
     const playedSound = sound ?? "button.wav";
-    singleSoundPlayer.play({ path: __dirname + "/" + playedSound });
+    singleSoundPlayer.play({ path: __dirname + "/sounds/" + playedSound });
 }
 
 //Pi herunterfahren
