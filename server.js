@@ -9,6 +9,7 @@ const slash = require('slash');
 const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
 const glob = require('glob');
+const singleSoundPlayer = require('node-wav-player');
 
 //Befehle auf Kommandzeile ausfuehren (volume)
 const exec = require('child_process').exec;
@@ -181,6 +182,7 @@ wss.on('connection', function connection(ws) {
                 if (value === 1) {
                     data["insertIndex"] = data["insertIndex"] > 1 ? data["insertIndex"] - 1 : 1;
                     shiftArray(value);
+                    playSound("track-change.wav");
                 }
 
                 //wenn der previous Button gedrueckt wurden
@@ -191,11 +193,13 @@ wss.on('connection', function connection(ws) {
                         console.log("go to previous track")
                         data["insertIndex"] = data["insertIndex"] < data["files"].length ? data["insertIndex"] + 1 : data["insertIndex"];
                         shiftArray(value);
+                        playSound("track-change.wav");
                     }
 
                     //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
                     else {
                         console.log("repeat current track");
+                        playSound("track-same.wav");
                     }
                 }
 
@@ -416,6 +420,12 @@ function countdown() {
     else {
         shutdown();
     }
+}
+
+//Einzelsound abspielen
+function playSound(sound) {
+    const playedSound = sound ?? "button.wav";
+    singleSoundPlayer.play({ path: __dirname + "/" + playedSound });
 }
 
 //Pi herunterfahren
