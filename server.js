@@ -425,7 +425,7 @@ function countdown() {
 
 //Einzelsound abspielen
 function playSound(sound) {
-    const playedSound = sound ?? "button.wav";
+    const playedSound = sound || "button.wav";
     singleSoundPlayer.play({ path: __dirname + "/sounds/" + playedSound });
 }
 
