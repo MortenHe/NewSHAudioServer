@@ -85,7 +85,7 @@ writeAutostartFile();
 //initiale Lautstaerke setzen
 setVolume();
 
-//Jede Sekunde die aktuelle Zeit innerhalb des Tracks liefern -> damit playlist-finish getriggert wird
+//Jede Sekunde die aktuelle Zeit innerhalb des Titels liefern -> damit playlist-finish getriggert wird
 setInterval(() => {
     player.getProps(['time_pos']);
 }, 1000);
