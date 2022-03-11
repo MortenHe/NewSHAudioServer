@@ -147,7 +147,7 @@ wss.on('connection', function connection(ws) {
                 //Pausenstatus toggeln, Player-Pause toggeln und clients informieren
                 data["paused"] = !data["paused"];
                 player.playPause();
-                playSound("pause.wav");
+                playSound("pause");
                 messageArr.push("paused");
 
                 //Wenn jetzt pausiert ist, Countdown starten
@@ -169,18 +169,18 @@ wss.on('connection', function connection(ws) {
                 if (value === 1) {
                     data["insertIndex"] = data["insertIndex"] > 1 ? data["insertIndex"] - 1 : 1;
                     shiftArray(value);
-                    playSound("track-change.wav");
+                    playSound("track-next");
                 }
 
                 //wenn der previous Button gedrueckt wurden
                 else {
 
                     //Wenn weniger als x Sekunden vergangen sind -> zum vorherigen Titel springen, insertOffeset berechnen und Titel-Array neu erzeugen
-                    if (data["secondsPlayed"] < 3) {
+                    if (data["secondsPlayed"] < 7) {
                         console.log("go to previous track")
                         data["insertIndex"] = data["insertIndex"] < data["files"].length ? data["insertIndex"] + 1 : data["insertIndex"];
                         shiftArray(value);
-                        playSound("track-change.wav");
+                        playSound("track-prev");
                     }
 
                     //Titel ist schon mehr als x Sekunden gelaufen -> Titel nochmal von vorne starten
@@ -188,7 +188,7 @@ wss.on('connection', function connection(ws) {
                     else {
                         console.log("repeat current track");
                         data["secondsPlayed"] = 0;
-                        playSound("track-same.wav");
+                        playSound("track-same");
                     }
                 }
 
@@ -409,8 +409,7 @@ function countdown() {
 
 //Einzelsound abspielen
 function playSound(sound) {
-    const playedSound = sound || "button.wav";
-    singleSoundPlayer.play({ path: __dirname + "/sounds/" + playedSound });
+    singleSoundPlayer.play({ path: audioDir + "/sounds/" + sound + ".wav" });
 }
 
 //Pi herunterfahren
