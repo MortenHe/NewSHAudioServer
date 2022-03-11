@@ -9,7 +9,6 @@
     "mplayer-wrapper": "^1.0.0",
     "node-wav-player": "^0.2.0",
     "shuffle-array": "^1.0.1",
-    "slash": "^3.0.0",
     "underscore": "^1.13.1",
     "ws": "^8.2.2"
   },

@@ -1,17 +1,11 @@
-//Mplayer + Wrapper anlegen
 const createPlayer = require('mplayer-wrapper');
 const player = createPlayer();
 const { spawn } = require('child_process');
-
-//filesystem, random und Array-Elemente verschieben fuer Playlist
 const fs = require('fs-extra');
-const slash = require('slash');
 const shuffle = require('shuffle-array');
 const arrayMove = require('array-move');
 const glob = require('glob');
 const singleSoundPlayer = require('node-wav-player');
-
-//Befehle auf Kommandzeile ausfuehren (volume)
 const exec = require('child_process').exec;
 
 //WebSocketServer anlegen und starten
@@ -19,14 +13,8 @@ const port = 9090;
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: port, clientTracking: true });
 
-//Bei Windwos aktuelles Verzeichnis mit Forward-Slashes
-let dirname = __dirname;
-if (process.platform === "win32") {
-    dirname = slash(dirname);
-}
-
 //Config file laden
-const configFile = fs.readJsonSync(dirname + "/../AudioServer/config.json");
+const configFile = fs.readJsonSync(__dirname + "/../AudioServer/config.json");
 const audioDir = configFile.audioDir + "/shp";
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
@@ -36,7 +24,7 @@ var countdownID = null;
 //GPIO Buttons starten, falls konfiguriert
 if (configFile.GPIOButtons) {
     console.log("Use GPIO Buttons");
-    const buttons_gpio = spawn("node", [dirname + "/../WSGpioButtons/button.js", port]);
+    const buttons_gpio = spawn("node", [__dirname + "/../WSGpioButtons/button.js", port]);
     buttons_gpio.stdout.on("data", (data) => {
         console.log("button event: " + data);
     });
@@ -45,7 +33,7 @@ if (configFile.GPIOButtons) {
 //USB RFID Reader starten, falls konfiguriert
 if (configFile.USBRFIDReader) {
     console.log("Use USB RFID Reader");
-    const rfid_usb = spawn("node", [dirname + "/../WSRFID/rfid.js", port]);
+    const rfid_usb = spawn("node", [__dirname + "/../WSRFID/rfid.js", port]);
     rfid_usb.stdout.on('data', (data) => {
         console.log("rfid event: " + data);
     });
@@ -58,14 +46,14 @@ if (configFile.STT) {
     //JSON-File fuer Indexerzeugung wird bei AudioServer erstellt (wegen MainJSON)
 
     //STT-Suche
-    const stt_search = spawn("node", [dirname + "/../WSSTT/stt.js", port]);
+    const stt_search = spawn("node", [__dirname + "/../WSSTT/stt.js", port]);
     stt_search.stdout.on('data', (data) => {
         console.log("stt search event: " + data);
     });
 }
 
 //Aktuelle Infos zu Volume / Playlist / PausedStatus / damit Clients, die sich spaeter anmelden, diese Info bekommen
-var data = [];
+const data = [];
 data["volume"] = configFile.volume;
 data["files"] = [];
 data["paused"] = false;
@@ -114,7 +102,7 @@ player.on('time_pos', (totalSecondsFloat) => {
 
     //Wie viele Sekunden ist der Track schon gelaufen? Float zu int: 13.4323 => 13
     data["secondsPlayed"] = Math.trunc(totalSecondsFloat);
-    console.log("track progress " + data["secondsPlayed"]);
+    //console.log("track progress " + data["secondsPlayed"]);
 });
 
 //alle mp3-Dateien in diesem Modus (Unterordner) ermitteln und random list erstellen
@@ -131,12 +119,12 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
 
         //Nachricht kommt als String -> in JSON Objekt konvertieren
-        var obj = JSON.parse(message);
-        let type = obj.type;
-        let value = obj.value;
+        const obj = JSON.parse(message);
+        const type = obj.type;
+        const value = obj.value;
 
         //Array von Messages erstellen, die an Client gesendet werden
-        let messageArr = [];
+        const messageArr = [];
 
         //Pro Typ gewisse Aktionen durchfuehren
         switch (type) {
@@ -175,8 +163,6 @@ wss.on('connection', function connection(ws) {
 
             //Song wurde vom Nutzer weitergeschaltet
             case 'change-item':
-
-                //Countdown abbrechen
                 resetCountdown();
 
                 //wenn der naechste Song kommen soll, insertOffeset berechnen und Titel-Array neu erzeugen
@@ -206,10 +192,8 @@ wss.on('connection', function connection(ws) {
                     }
                 }
 
-                //Es ist nicht mehr pausiert
-                data["paused"] = false;
-
                 //Song abspielen und Nachricht an clients
+                data["paused"] = false;
                 playFile();
                 messageArr.push("files", "paused", "insertIndex");
                 break;
@@ -228,7 +212,7 @@ wss.on('connection', function connection(ws) {
                 resetCountdown();
 
                 //Ausgewaehlten Titel and 1. Position setzen und anderen Titel dorthin verschieben
-                let currentFile = data["files"][0];
+                const currentFile = data["files"][0];
                 data["files"][0] = data["files"][value];
                 data["files"][value] = currentFile
 
@@ -244,7 +228,7 @@ wss.on('connection', function connection(ws) {
             case 'enqueue-title':
 
                 //Wo soll Titel einfuegt werden?
-                let tempInsertIndex = data["insertIndex"];
+                const tempInsertIndex = data["insertIndex"];
 
                 //Wenn eingereihter Titel hinter Einfuegemarke liegt, Einfuegemarke nach hinten verschieben
                 if (value >= data["insertIndex"]) {
@@ -276,8 +260,6 @@ wss.on('connection', function connection(ws) {
 
             //Zwischen Liederlisten wechseln (Musiksammlung SH, MH, Kids)
             case 'set-audio-mode':
-
-                //Countdown abbrechen
                 resetCountdown();
 
                 //Wo liegen die Dateien des neuen Modus?
@@ -352,7 +334,7 @@ function sendClientInfo(messageArr) {
         };
 
         //Ueber Liste der Clients gehen und Nachricht schicken
-        for (ws of wss.clients) {
+        for (const ws of wss.clients) {
             try {
                 ws.send(JSON.stringify(messageObj));
             }
@@ -368,15 +350,15 @@ function shiftArray(splitPosition) {
 
 //Aktuellen Modus fuer Autostart merken
 function writeAutostartFile() {
-    fs.writeFile(dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + dirname + "/../AudioServer/startnodesh.sh " + data["audioMode"]);
+    fs.writeFile(__dirname + "/../wss-install/last-player", "AUTOSTART=sudo " + __dirname + "/../AudioServer/startnodesh.sh " + data["audioMode"]);
 }
 
 //Lautstaerke setzen
 function setVolume() {
     if (configFile.audioOutput) {
-        const initialVolumeCommand = "amixer sset " + configFile.audioOutput + " " + + data["volume"] + "% -M";
-        console.log(initialVolumeCommand);
-        exec(initialVolumeCommand);
+        const volumeCommand = "amixer sset " + configFile.audioOutput + " " + + data["volume"] + "% -M";
+        console.log(volumeCommand);
+        exec(volumeCommand);
     }
     else {
         console.log("no audioOutput configured");
