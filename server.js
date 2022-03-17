@@ -15,7 +15,8 @@ const wss = new WebSocket.Server({ port: port, clientTracking: true });
 
 //Config file laden
 const configFile = fs.readJsonSync(__dirname + "/../AudioServer/config.json");
-const audioDir = configFile.audioDir + "/shp";
+const audioDir = configFile.audioDir;
+const audioDirShp = audioDir + "/shp";
 
 //Zeit wie lange bis Shutdown durchgefuhert wird bei Inaktivitaet
 const countdownTime = configFile.countdownTime;
@@ -61,7 +62,7 @@ data["insertIndex"] = 1;
 data["secondsPlayed"] = 0;
 data["countdownTime"] = -1;
 data["pageTitle"] = configFile.userMode;
-data["audioModes"] = fs.readJsonSync(audioDir + "/audioModes.json");
+data["audioModes"] = fs.readJsonSync(audioDirShp + "/audioModes.json");
 
 //Welcher Audio Mode ist zu Beginn aktiv?
 data["audioMode"] = process.argv[2] || configFile.shpAudioMode;
@@ -367,7 +368,7 @@ function setVolume() {
 
 //Playlist erstellen mit mp3 Files dieses Modes
 function getAudioFiles() {
-    const allFiles = glob.sync(audioDir + "/" + data["audioMode"] + "/**/*.mp3", { nocase: true });
+    const allFiles = glob.sync(audioDirShp + "/" + data["audioMode"] + "/**/*.mp3", { nocase: true });
     data["files"] = shuffle(allFiles);
 }
 
